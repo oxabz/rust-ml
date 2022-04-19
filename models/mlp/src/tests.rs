@@ -12,13 +12,12 @@ mod tests {
     #[test]
     fn create_cuda() {
         tch::maybe_init_cuda();
-        if tch::Cuda::is_available(){
-            let vs = nn::VarStore::new(Device::Cuda(0));
-            let _ = MLP::new(&(&vs.root() / "model"), 4, 3, 2, 1);
+        if !tch::Cuda::is_available(){
+            println!("Cuda is unavailable : skipping the cuda related test");
+            return;
         }
-        else {
-            print!("Cuda unavailable")
-        }
+        let vs = nn::VarStore::new(Device::Cuda(0));
+        let _ = MLP::new(&(&vs.root() / "model"), 4, 3, 2, 1);
     }
 
     #[test]
@@ -35,6 +34,10 @@ mod tests {
 
     #[test]
     fn forwarding_cuda(){
+        if !tch::Cuda::is_available(){
+            println!("Cuda is unavailable : skipping the cuda related test");
+            return;
+        }
 
         let vs = nn::VarStore::new(Device::Cuda(0));
         let mlp = MLP::new(&(&vs.root() / "model"), 4, 3, 5, 1);

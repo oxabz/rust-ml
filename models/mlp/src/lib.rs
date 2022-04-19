@@ -23,9 +23,17 @@ impl MLP{
         let seq = seq.add(in_layer);
         let seq = seq.add_fn(Tensor::relu);
     
-        let inter_layers = (1..layer_count).into_iter().map(|i| nn::linear(vs / format!("layer{}", i), hidden_nodes as i64, hidden_nodes as i64, Default::default()));
+        let inter_layers = (1..layer_count)
+            .into_iter()
+            .map(|i| {
+                nn::linear(
+                    vs / format!("layer{}", i), 
+                    hidden_nodes as i64, hidden_nodes as i64, 
+                    Default::default())
+            });
     
-        let seq = inter_layers.fold(seq, |seq, lin| seq.add(lin).add_fn(Tensor::relu));
+        let seq = inter_layers
+            .fold(seq, |seq, lin| {seq.add(lin).add_fn(Tensor::relu)});
     
         let out_layer = nn::linear(
             vs / format!("layer{}", layer_count), 

@@ -23,5 +23,6 @@ fn main() -> Result<()> {
             100. * f64::from(&test_accuracy),
         );
     }
-    Ok(())
+    
+    Ok(()) 
 }
