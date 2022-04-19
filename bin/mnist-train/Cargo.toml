@@ -9,3 +9,4 @@ edition = "2021"
 mlp={path="../../models/mlp"}
 tch="0.7.0"
 anyhow = "1.0.56"
+rand = "0.8.5"
