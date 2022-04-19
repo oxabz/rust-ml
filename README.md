@@ -20,7 +20,7 @@ It is structured as a cargo workspace split between different crates
 
 ### Install libtorch :  
 
-[For installing libtorch I leave you to the pytorch documentation](https://pytorch.org/cppdocs/installing.html)
+[To install libtorch I leave you to the official pytorch documentation](https://pytorch.org/cppdocs/installing.html)
 
 ### Preping tch-rs :
 
@@ -31,9 +31,12 @@ export LIBTORCH=/path/to/libtorch
 export LD_LIBRARY_PATH=${LIBTORCH}/lib:$LD_LIBRARY_PATH
 ```
 
+if you encouter problemes building tch-rs check the [official github repository](https://github.com/LaurentMazare/tch-rs)
+
 #### CUDA :
 
 To use cuda with your models, set ``TORCH_CUDA_VERSION`` to ``cu113``
+
 
 
 ## Models :
