@@ -20,7 +20,7 @@ It is structured as a cargo workspace split between different crates
 
 ### Install libtorch :  
 
-[For installing libtorch I live you to the pytorch documentation](https://pytorch.org/cppdocs/installing.html)
+[For installing libtorch I leave you to the pytorch documentation](https://pytorch.org/cppdocs/installing.html)
 
 ### Preping tch-rs :
 
