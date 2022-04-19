@@ -6,7 +6,7 @@ A test to understand the basics of tch-rs
 
 - [Download mnist](http://yann.lecun.com/exdb/mnist/)
 - extract files 
-- mv them into the data folder with the following names :
+- mv them into folder with the following names :
 ```
 data
 ├── t10k-images-idx3-ubyte
@@ -15,4 +15,4 @@ data
 └── train-labels-idx1-ubyte
 ```
 - cd to the root of the crate 
-- ``cargo run``
+- ``cargo run -- path/to/mnist``

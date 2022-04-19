@@ -1,2 +1,2 @@
 [workspace]
-members = [ "models/*", "bin/*"]
+members = [ "models/*", "bin/*", "utils"]

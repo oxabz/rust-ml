@@ -1,12 +1,29 @@
-use std::f32;
-
 use anyhow::Result;
 use tch::{Device, nn::{self, OptimizerConfig, Module}};
 use mlp::MLP;
+use clap::Parser;
+
+#[derive(Debug, Parser)]
+#[clap(version)]
+struct Args{
+    mnist_path: String,
+
+    #[clap(long)]
+    weight_path: Option<String>,
+
+    #[clap(long, default_value_t = 128)]
+    hidden_nodes: u32,
+
+    #[clap(long, default_value_t = 2)]
+    layer_count: u32
+}
 
 fn main() -> Result<()> {
+    // Parsing parameters
+    let args = Args::parse();
+
     // Loading Dataset
-    let m = tch::vision::mnist::load_dir("data")?;
+    let m = tch::vision::mnist::load_dir(args.mnist_path)?;
 
     // Picking the device to use to the train of the model
     let device = if tch::Cuda::is_available(){
@@ -19,7 +36,7 @@ fn main() -> Result<()> {
 
     // Creating the Model and the storage for the parameters
     let vs = nn::VarStore::new(device.clone());
-    let net = MLP::new(&vs.root(), 784, 10, 128, 2);
+    let net = MLP::new(&vs.root(), 784, 10, args.hidden_nodes, args.layer_count);
 
     // Creating the optimizer 
     let mut opt = nn::Adam::default().build(&vs, 1e-3)?;
@@ -47,5 +64,9 @@ fn main() -> Result<()> {
         );
     }
     
+    if let Some(save_path) = args.weight_path{
+        vs.save(save_path)?;
+    }
+
     Ok(()) 
 }
