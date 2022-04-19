@@ -1,6 +1,6 @@
 # Data Science with rust  
 
-This repo is a place to store my experiment with tch-rs evcxr and other related datascience stuff in rust.
+This repo is a place to store my experiment with tch-rs evcxr and other datascience related stuff in rust.
 
 ## Structure : 
 
