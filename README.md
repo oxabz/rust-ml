@@ -31,7 +31,7 @@ export LIBTORCH=/path/to/libtorch
 export LD_LIBRARY_PATH=${LIBTORCH}/lib:$LD_LIBRARY_PATH
 ```
 
-if you encouter problemes building tch-rs check the [official github repository](https://github.com/LaurentMazare/tch-rs)
+If you encouter problems building tch-rs check the [official github repository](https://github.com/LaurentMazare/tch-rs)
 
 #### CUDA :
 
