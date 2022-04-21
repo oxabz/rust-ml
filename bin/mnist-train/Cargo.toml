@@ -2,7 +2,8 @@
 name = "mnist-train"
 version = "0.1.0"
 edition = "2021"
-
+description = "Simple binary that train a Multi Layer Perceptron sur MNIST"
+authors = ["Matthieu Legrand <legmatt0@gmail.com>"] 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -10,4 +11,4 @@ mlp={path="../../models/mlp"}
 tch="0.7.0"
 anyhow = "1.0.56"
 rand = "0.8.5"
-clap = {version = "3.1.9", features=["derive"]}
+clap = {version = "3.1", features=["derive"]}

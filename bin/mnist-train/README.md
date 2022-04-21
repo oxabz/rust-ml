@@ -2,7 +2,7 @@
 
 A test to understand the basics of tch-rs 
 
-## How to run ?
+## How to run it ?
 
 - [Download mnist](http://yann.lecun.com/exdb/mnist/)
 - extract files 
@@ -16,3 +16,8 @@ data
 ```
 - cd to the root of the crate 
 - ``cargo run -- path/to/mnist``
+
+## How to save the weights
+``cargo run -- path/to/mnist --weight_path path/to/weights``
+
+## Usage

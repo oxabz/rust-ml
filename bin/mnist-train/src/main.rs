@@ -4,16 +4,20 @@ use mlp::MLP;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
-#[clap(version)]
+#[clap(version, author, about)]
 struct Args{
+    /// Path to the dataset
     mnist_path: String,
 
+    /// Path to the save location for the weight of the model
     #[clap(long)]
     weight_path: Option<String>,
 
+    /// Number of Nodes in the hiden layers
     #[clap(long, default_value_t = 128)]
     hidden_nodes: u32,
 
+    /// Number of hidden layers
     #[clap(long, default_value_t = 2)]
     layer_count: u32
 }

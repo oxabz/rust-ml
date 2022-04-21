@@ -665,6 +665,7 @@ name = "mnist-api"
 version = "0.1.0"
 dependencies = [
  "async-channel",
+ "clap",
  "futures-util",
  "mlp",
  "tch",
