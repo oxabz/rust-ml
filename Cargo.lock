@@ -1128,6 +1128,9 @@ dependencies = [
 [[package]]
 name = "tch-utils"
 version = "0.1.0"
+dependencies = [
+ "tch",
+]
 
 [[package]]
 name = "tempfile"
@@ -1377,6 +1380,14 @@ name = "typenum"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+
+[[package]]
+name = "u-net"
+version = "0.1.0"
+dependencies = [
+ "tch",
+ "tch-utils",
+]
 
 [[package]]
 name = "unicase"
