@@ -1,5 +1,5 @@
 [package]
-name = "u-net"
+name = "unet"
 version = "0.1.0"
 edition = "2021"
 

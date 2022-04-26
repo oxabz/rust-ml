@@ -5,7 +5,12 @@ pub mod encoder;
 pub struct UnetProps{
     pub decoder_block_convolutions: u32,
     pub center_block_convolutions: u32,
-    pub input_chanels: i64,
+}
+
+impl Default for UnetProps{
+    fn default() -> Self {
+        Self { decoder_block_convolutions: 2, center_block_convolutions: 2}
+    }
 }
 
 #[derive(Debug)]
@@ -95,7 +100,7 @@ impl<E,const L : usize> nn::Module for UNet<E, L> where E:FeatureExtractor<L> {
             } else {
                 fm.i((.., .., dw/2..fm_size[fm_size.len()-2]-dw/2, dh/2..fm_size[fm_size.len()-1]-dh/2))
             };
-            let stacked = tch::Tensor::stack(&[xt, resized_fm], (fm_size.len()-3) as i64);
+            let stacked = tch::Tensor::cat(&[xt, resized_fm], (fm_size.len()-3) as i64);
             
             //Convolutions
             xs = convs.forward(&stacked);

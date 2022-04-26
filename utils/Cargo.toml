@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 tch = "0.7"
+anyhow = "1"
+thiserror = "1"
+itertools = "0.10"
+tch-macros-utils = {path="../macros-utils"}
