@@ -135,7 +135,6 @@ pub fn dims(args: TokenStream, input: TokenStream) -> TokenStream {
                 let (anc_idx, anc_id) = it.next().unwrap();
                 
                 for (idx, id) in it{
-                    let id_name = id.to_string();
                     let stmt : Stmt = parse_quote!(
                         assert!(#anc_id.size()[#anc_idx] == #id.size()[#idx], "Size mismatch on tensors with the dimention {}", #var_id_n);
                     );
