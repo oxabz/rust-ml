@@ -1,6 +1,5 @@
-use std::{path::{Path, PathBuf}, io, fs::{self, ReadDir}, marker::PhantomData};
+use std::{path::{Path, PathBuf}, io, fs::{self, ReadDir}};
 use anyhow::bail;
-use itertools::{Itertools, multiunzip};
 use thiserror::{Error,};
 
 pub trait Dataset<X: Send, Y: Send>: Iterator<Item = (X, Y)> + Send {}

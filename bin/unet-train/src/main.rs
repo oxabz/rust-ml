@@ -1,8 +1,8 @@
-use std::{path::{PathBuf, Path}, fs::File};
+use std::{path::{PathBuf}, fs::File};
 use clap::{Parser, ArgEnum};
 use itertools::{Itertools, multiunzip};
-use tch::{Tensor, vision::image, nn::{self, OptimizerConfig, Module}, Device};
-use tch_utils::data::{Dataset, Datafolder};
+use tch::{Tensor, nn::{self, OptimizerConfig, Module}, Device, vision::image};
+use tch_utils::{data::{Datafolder}, metrics::dice_score_1c};
 use tiff::decoder::Decoder;
 use unet::encoder;
 
@@ -33,10 +33,6 @@ fn main() -> anyhow::Result<()>{
     let args = Args::parse();
 
     let train_path = args.dataset_path.join("training");
-    let mut train_ds = Datafolder::from(&train_path, "images".to_string(), "mask".to_string(), &load_image, &|path|tch::vision::image::load(path).unwrap())?;
-
-    let (x, y) = train_ds.next().unwrap();
-    image::save(&x, "test.png");
     
     // Picking the device to use to the train of the model
     let device = if tch::Cuda::is_available(){
@@ -57,29 +53,33 @@ fn main() -> anyhow::Result<()>{
 
     // Simple epoch loop
     for epoch in 1..500 {
+        let mut steps = 0;
+        let mut avg_loss = 0.0;
+        let train_ds = Datafolder::from(&train_path, "images".to_string(), "mask".to_string(), &load_image, &|path|tch::vision::image::load(path).unwrap())?
+            .map(|x|{
+                println!("loaded");
+                (image::resize(&x.0, 565, 565).unwrap(),image::resize(&x.0, 565, 565).unwrap())
+            });
         for batch in train_ds.chunks(args.batch_size).into_iter(){
             let (x, y) : (Vec<_>,Vec<_>) = multiunzip(batch);
-            let x = Tensor::stack(x.as_slice(), 0);
-            let y = Tensor::stack(y.as_slice(), 0);
-            // MNIST is small enought so that we do not have to split it in batch so we compute the loss directly on the whole dataset
-            let loss = unet
-                .forward(&x.train_images.to_device(device.clone()));
-                //.(&m.train_labels.to_device(device.clone()));
-                
+            let x = Tensor::stack(x.as_slice(), 0).to_kind(tch::Kind::Float).to_device(device);
+            let y = Tensor::stack(y.as_slice(), 0).to_kind(tch::Kind::Float).to_device(device);
+            // Making the prediction
+            let y_hat = unet.forward(&x);
+            let loss = 1.0 as f32 - dice_score_1c(&y_hat, &y);
+            
             // Gradient descent
             opt.backward_step(&loss);
 
+            steps += args.batch_size;
+            avg_loss += (f64::from(&loss) - avg_loss) / (steps + args.batch_size) as f64;
         }
         
-        // Loggin the accuracy of the epoch
-        let test_accuracy = net
-            .forward(&m.test_images.to_device(device.clone()))
-            .accuracy_for_logits(&m.test_labels.to_device(device.clone()));
+        // Loggin the loss of the epoch
         println!(
-            "epoch: {:4} train loss: {:8.5} test acc: {:5.2}%",
+            "epoch: {:4} train loss: {:8.5}",
             epoch,
-            f64::from(&loss),
-            100. * f64::from(&test_accuracy),
+            avg_loss
         );
     }
     Ok(())

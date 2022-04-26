@@ -14,9 +14,9 @@ impl BasicCNN {
         let mut layers = vec![];
         for i in 0..4{
             let seq = nn::seq();
-            let seq = seq.add(nn::conv2d(&(vs/format!("layer{i}"))/"0", previous_channels, 64*2^i, 3, Default::default()))
-                .add(nn::conv2d(&(vs/format!("layer{i}"))/"1", 64*2^i, 64*2^i, 3, Default::default()));
-            previous_channels = 64*2^i;
+            let seq = seq.add(nn::conv2d(&(vs/format!("layer{i}"))/"0", previous_channels, 64*(2 as i64).pow(i), 3, Default::default()))
+                .add(nn::conv2d(&(vs/format!("layer{i}"))/"1", 64*(2 as i64).pow(i), 64*(2 as i64).pow(i), 3, Default::default()));
+            previous_channels = 64*(2 as i64).pow(i);
             layers.push(seq);
         }
         Self{

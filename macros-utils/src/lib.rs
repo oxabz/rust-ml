@@ -78,7 +78,6 @@ pub fn dims(args: TokenStream, input: TokenStream) -> TokenStream {
     let mut i = 0;
     // Parse the list of variables the user wanted to check.
     let args = parse_macro_input!(args as Args);
-    dbg!(&args);
 
     // Checking the existance of the variables and adding dimentions check
     for arg in args.tensors.iter() {

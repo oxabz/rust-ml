@@ -96,9 +96,9 @@ impl<E,const L : usize> nn::Module for UNet<E, L> where E:FeatureExtractor<L> {
             let dw = fm_size[fm_size.len()-2] - x_size[fm_size.len()-2];
             let dh = fm_size[fm_size.len()-1] - x_size[x_size.len()-1];
             let resized_fm = if fm_size.len() == 3{
-                fm.i((.., dw/2..fm_size[fm_size.len()-2]-dw/2, dh/2..fm_size[fm_size.len()-1]-dh/2))
+                fm.i((.., dw/2..fm_size[fm_size.len()-2]-dw/2-1, dh/2..fm_size[fm_size.len()-1]-dh/2-1))
             } else {
-                fm.i((.., .., dw/2..fm_size[fm_size.len()-2]-dw/2, dh/2..fm_size[fm_size.len()-1]-dh/2))
+                fm.i((.., .., dw/2..fm_size[fm_size.len()-2]-dw/2-1, dh/2..fm_size[fm_size.len()-1]-dh/2-1))
             };
             let stacked = tch::Tensor::cat(&[xt, resized_fm], (fm_size.len()-3) as i64);
             
