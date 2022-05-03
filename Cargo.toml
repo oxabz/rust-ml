@@ -1,3 +1,2 @@
 [workspace]
 members = [ "models/*", "bin/*", "utils", "macros-utils"]
-authors = ["Matthieu Legrand <legmatt0@gmail.com>"] 

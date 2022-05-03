@@ -1,0 +1,36 @@
+#input-canvas{
+    max-width: 600px;
+    min-width: 200px;
+    width: 70%;
+}
+
+#input-canvas-inner{
+    width: 100%;
+    aspect-ratio: 1;
+    box-shadow: var(--card-box-shadow);
+    image-rendering: pixelated;
+}
+
+.drawable-canvas-buttons{
+    position: relative;
+    display: flex;
+    justify-content: end;
+}
+
+.hcenter{
+    display: flex;
+    justify-content: center;
+}
+
+.tray{
+    width: auto;
+    display: flex;
+    justify-content: end;
+}
+
+button.icon{
+    background-color: transparent;
+    border: none;
+    color: var(--secondary);
+    width: fit-content;
+}

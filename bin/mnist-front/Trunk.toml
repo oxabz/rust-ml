@@ -1,0 +1,3 @@
+[[proxy]]
+rewrite = "/API/V1/"
+backend = "http://localhost:3030/API/V1/"

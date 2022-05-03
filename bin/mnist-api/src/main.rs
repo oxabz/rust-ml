@@ -1,8 +1,8 @@
 use async_channel::{unbounded, Receiver};
-use tch::{nn::{self, Module}, Kind, Tensor};
+use bytes::Bytes;
+use tch::{nn::{self, Module}, Kind, Tensor, IndexOp};
 use tokio::sync::oneshot::{channel, Sender};
-use warp::{Filter, multipart::{FormData, Part}, reply::with_status, hyper::StatusCode, Reply, Rejection, Buf};
-use futures_util::TryStreamExt;
+use warp::{Filter, reply::with_status, hyper::StatusCode, Reply, Rejection, path};
 use clap::Parser;
 
 
@@ -22,7 +22,7 @@ async fn main() {
     let args = Args::parse();
 
     // Creating  Worker threads that will handle the inference along side with a queue chanel to send them the input (we keep an instance of the sender in the main thread to keep the worker alive.)
-    let (s, r) = unbounded::<(Tensor, Sender<i32>)>();
+    let (s, r) = unbounded::<(Tensor, Sender<Vec<f64>>)>();
     for _ in 0..args.workers {
         let r = r.clone();
         tokio::spawn(async {inference_worker(r).await});
@@ -30,9 +30,10 @@ async fn main() {
 
     // Setting up a route to do the inference 
     // GET /
-    let mnist_inf_route = warp::get()
+    let mnist_inf_route = path!("API"/"V1")
+        .and(warp::post())
         .map(move||s.clone()) // Requires the sender to ask for inference to the worker 
-        .and(warp::multipart::form()) // Need a form to recieve the image
+        .and(warp::body::bytes()) // Need a form to recieve the image
         .and_then(inference_controller); 
 
     // Start the server
@@ -41,7 +42,7 @@ async fn main() {
         .await;
 }
 
-async fn inference_worker(tasks: Receiver<(Tensor, Sender<i32>)>){
+async fn inference_worker(tasks: Receiver<(Tensor, Sender<Vec<f64>>)>){
     // Setting up an instance of the model for the worker
     let mut vs = nn::VarStore::new(tch::Device::Cpu);
     let mlp = mlp::MLP::new(&vs.root(), 784, 10, 128, 2);
@@ -49,52 +50,38 @@ async fn inference_worker(tasks: Receiver<(Tensor, Sender<i32>)>){
 
     // Recieve a inference request, compute the result and send it back with the given one shot chanel
     while let Ok((x, s)) = tasks.recv().await {
-        let y_hat = mlp.forward(&x.reshape(&[784])).argmax( None,false);
-        if let Err(err) = s.send(i32::from(&y_hat)){
-            eprintln!("Couldnt respond to the client : {err}");
+        let y_hat = mlp.forward(&x.reshape(&[784])).softmax(0, Kind::Float);
+        let res = (0..=9).into_iter().map(|i|f64::from(y_hat.i(i))).collect::<Vec<_>>();
+        if let Err(err) = s.send(res){
+            eprintln!("Couldnt respond to the client : {err:?}");
         }
     } 
 }
 
-async fn inference_controller( queue:async_channel::Sender<(Tensor, Sender<i32>)>, form: FormData)->Result<impl Reply, Rejection> {
-    // Awaiting the complete form and collecting it in a colection of it's field
-    let parts: Vec<Part> = form.try_collect().await.map_err(|e| {
-        eprintln!("Form error: {}", e);
-        warp::reject::reject()
-    })?;
+async fn inference_controller( queue:async_channel::Sender<(Tensor, Sender<Vec<f64>>)>, data: Bytes)->Result<impl Reply, Rejection> {
+    let data:Vec<u8> = data.into_iter().collect();
 
-    // Picking the first file field
-    let mut file_part  = match parts.into_iter().find(|x|x.name()=="file") {
-        Some(p)=>p,
-        None => return Ok(with_status("Need a file for inference".to_string(), StatusCode::BAD_REQUEST))
+    let img = match tch::Tensor::try_from(data){
+        Ok(ok) => ok,
+        Err(_) => return Err(warp::reject()),
     };
 
-    // Checking the type of the file to be a png
-    let content_type = match file_part.content_type() {
-        Some(t) => Ok(t),
-        None => Err(warp::reject::reject()),
-    }?;
-    if content_type != "image/png" {
-        return Ok(with_status("Only accept png".to_string(), StatusCode::BAD_REQUEST)) 
+    if img.size1().unwrap() != 3136{
+        return Ok(with_status(format!("Expected 28x28x4 image"), StatusCode::BAD_REQUEST));
     }
 
-    // Collecting the file data into a tensor
-    let t = file_part.data().await.unwrap().unwrap();
-    let img = match tch::vision::image::load_from_memory(t.chunk()){
-        Ok(img) => img,
-        Err(_) => return Ok(with_status("error loading the image".to_string(), StatusCode::BAD_REQUEST)),
-    };
-
+    let img = img.reshape(&[28, 28, 4]).swapaxes(0, 2).swapaxes(1, 2);
+    
     // Checking the dimention of the tensor 
     if img.size()[1] != 28 || img.size()[2] != 28 {
         return Ok(with_status("Expected 28x28 images".to_string(), StatusCode::BAD_REQUEST))
     }
 
     // Preparing the tensor for inference (float type & gray scale)
-    let img = img.to_kind(Kind::Float).mean_dim(&[0], false,Kind::Float);
+    let img = img.to_kind(Kind::Float).i((0,..,..));
 
     // Sending the input to be processed by the worker
-    let (sret, rret) = channel::<i32>();
+    let (sret, rret) = channel::<Vec<f64>>();
     if queue.send((img, sret)).await.is_err() {
         return Ok(with_status("Weird chanel stuff".to_string(), StatusCode::INTERNAL_SERVER_ERROR));
     }
@@ -106,5 +93,5 @@ async fn inference_controller( queue:async_channel::Sender<(Tensor, Sender<i32>)
     };
 
     // HTTP Reply
-    Ok(with_status(format!("{}", res), StatusCode::OK))
+    Ok(with_status(format!("{res:?}"), StatusCode::OK))
 }
