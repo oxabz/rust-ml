@@ -9,13 +9,11 @@ use yew::prelude::*;
 use yew_agent::use_bridge;
 
 #[function_component(Input)]
-fn input() -> Html{
-    let inference_agent = use_bridge::<InferenceAgent,_>(|_|{});
-    let onchange = {
-        let inference_agent = inference_agent.clone();
-        Callback::from(move|data| inference_agent.send(InferenceAgentInput::NewInput(data)))
-    };
-    html! { 
+fn input() -> Html {
+    let inference_agent = use_bridge::<InferenceAgent, _>(|_| {});
+    let onchange =
+        Callback::from(move |data| inference_agent.send(InferenceAgentInput::NewInput(data)));
+    html! {
         <div class="container ">
             <h2>{"Input"}</h2>
             <div class="hcenter">
@@ -27,17 +25,20 @@ fn input() -> Html{
 }
 
 #[function_component(Output)]
-fn output() -> Html{
-    let values = use_state(||InferenceAgentOutput::Unitialized);
+fn output() -> Html {
+    let values = use_state(|| InferenceAgentOutput::Unitialized);
     let _inference_agent = {
         let values = values.clone();
-        use_bridge::<InferenceAgent,_>(move |out|{info!("change");values.set(out)})
+        use_bridge::<InferenceAgent, _>(move |out| {
+            info!("change");
+            values.set(out)
+        })
     };
     let res = match &*values {
         InferenceAgentOutput::Clean(val) | InferenceAgentOutput::Dirty(val) => {
-            let headers = (0..=9).map(|i:i32|html!{<th>{i}</th>});
-            let num_val = val.iter().map(|v|html!{<th>{format!("{v:.2}")}</th>});
-            html!{
+            let headers = (0..=9).map(|i: i32| html! {<th>{i}</th>});
+            let num_val = val.iter().map(|v| html! {<th>{format!("{v:.2}")}</th>});
+            html! {
                 <figure>
                 <table>
                     <thead>
@@ -53,10 +54,10 @@ fn output() -> Html{
                 </table>
                 </figure>
             }
-        },
-        InferenceAgentOutput::Unitialized => html!{},
+        }
+        InferenceAgentOutput::Unitialized => html! {},
     };
-    html! { 
+    html! {
         <div class="container">
             <h2>{"Output"}</h2>
             <article>
@@ -68,7 +69,7 @@ fn output() -> Html{
 
 #[function_component(App)]
 fn app() -> Html {
-    html! { 
+    html! {
         <>
             <header class="container">
                 <hgroup>

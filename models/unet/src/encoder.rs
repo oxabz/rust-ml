@@ -1,41 +1,75 @@
-use tch::{nn::{self, Path, Sequential, Module}};
+use tch::nn::{self, ConvConfig, Module, Path, Sequential};
 use tch_utils::types::FeatureExtractor;
 
-
-
 #[derive(Debug)]
-pub struct BasicCNN{
-    layers: Vec<Sequential>
+pub struct BasicCNN {
+    layers: Vec<Sequential>,
 }
 
 impl BasicCNN {
-    pub fn new(vs:&Path, in_channels: u32)-> Self{
-        let mut previous_channels = in_channels as i64;    
+    pub fn new(vs: &Path, in_channels: u32) -> Self {
+        let mut previous_channels = in_channels as i64;
         let mut layers = vec![];
-        for i in 0..4{
+        for i in 0..4 {
             let seq = nn::seq();
-            let seq = seq.add(nn::conv2d(&(vs/format!("layer{i}"))/"0", previous_channels, 64*(2 as i64).pow(i), 3, Default::default()))
-                .add(nn::conv2d(&(vs/format!("layer{i}"))/"1", 64*(2 as i64).pow(i), 64*(2 as i64).pow(i), 3, Default::default()));
-            previous_channels = 64*(2 as i64).pow(i);
+            let seq = seq
+                .add(nn::conv2d(
+                    &(vs / format!("layer{i}")) / "0",
+                    previous_channels,
+                    64 * 2_i64.pow(i),
+                    3,
+                    Default::default(),
+                ))
+                .add(nn::conv2d(
+                    &(vs / format!("layer{i}")) / "1",
+                    64 * 2_i64.pow(i),
+                    64 * 2_i64.pow(i),
+                    3,
+                    Default::default(),
+                ));
+            previous_channels = 64 * 2_i64.pow(i);
             layers.push(seq);
         }
-        Self{
-            layers
+        Self { layers }
+    }
+
+    pub fn new_conf(vs: &Path, in_channels: u32, conf: ConvConfig) -> Self {
+        let mut previous_channels = in_channels as i64;
+        let mut layers = vec![];
+        for i in 0..4 {
+            let seq = nn::seq();
+            let seq = seq
+                .add(nn::conv2d(
+                    &(vs / format!("layer{i}")) / "0",
+                    previous_channels,
+                    64 * 2_i64.pow(i),
+                    3,
+                    conf,
+                ))
+                .add(nn::conv2d(
+                    &(vs / format!("layer{i}")) / "1",
+                    64 * 2_i64.pow(i),
+                    64 * 2_i64.pow(i),
+                    3,
+                    conf,
+                ));
+            previous_channels = 64 * 2_i64.pow(i);
+            layers.push(seq);
         }
-    } 
+        Self { layers }
+    }
 }
 
-impl nn::Module for BasicCNN{
+impl nn::Module for BasicCNN {
     fn forward(&self, xs: &tch::Tensor) -> tch::Tensor {
         let xs = self.layers[0].forward(xs).max_pool2d_default(2);
         let xs = self.layers[1].forward(&xs).max_pool2d_default(2);
         let xs = self.layers[2].forward(&xs).max_pool2d_default(2);
-        let xs = self.layers[3].forward(&xs).max_pool2d_default(2);
-        xs
+        self.layers[3].forward(&xs).max_pool2d_default(2)
     }
 }
 
-impl FeatureExtractor<4> for BasicCNN{
+impl FeatureExtractor<4> for BasicCNN {
     const CHANELS_COUNT: [i64; 4] = [64, 128, 256, 512];
 
     fn forward_extracts(&self, xs: &tch::Tensor) -> ([tch::Tensor; 4], tch::Tensor) {

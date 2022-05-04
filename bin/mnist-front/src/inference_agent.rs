@@ -1,37 +1,36 @@
-
 use std::collections::HashSet;
 
 use log::error;
-use yew_agent::{Agent, Context, AgentLink, HandlerId};
+use yew_agent::{Agent, AgentLink, Context, HandlerId};
 
-const API_URL: &'static str= "API/V1/";
+const API_URL: &str = "API/V1/";
 
 #[derive(Clone)]
-pub enum InferenceAgentOutput{
+pub enum InferenceAgentOutput {
     Clean(Vec<f64>),
     Dirty(Vec<f64>),
-    Unitialized
+    Unitialized,
 }
 
-pub enum InferenceAgentInput{
-    NewInput(Vec<u8>)
+pub enum InferenceAgentInput {
+    NewInput(Vec<u8>),
 }
 
-pub enum InferenceAgentMessage{
+pub enum InferenceAgentMessage {
     ResultRecieved(Vec<f64>),
-    RequestError
+    RequestError,
 }
 
-pub struct InferenceAgent{
-    link:AgentLink<Self>,
+pub struct InferenceAgent {
+    link: AgentLink<Self>,
     url: String,
     result: InferenceAgentOutput,
-    subscribers: HashSet<HandlerId>
+    subscribers: HashSet<HandlerId>,
 }
 
-impl InferenceAgent{
-    async fn request_inference(url:String, data:Vec<u8>) -> InferenceAgentMessage{
-        let mut resp = match surf::post(&url).body(data).await{
+impl InferenceAgent {
+    async fn request_inference(url: String, data: Vec<u8>) -> InferenceAgentMessage {
+        let mut resp = match surf::post(&url).body(data).await {
             Ok(ok) => ok,
             Err(err) => {
                 error!("InferenceAgent::request_inference {err}");
@@ -39,19 +38,19 @@ impl InferenceAgent{
             }
         };
 
-        let res = match resp.body_json::<Vec<f64>>().await{
-            Ok(res)=>res,
+        let res = match resp.body_json::<Vec<f64>>().await {
+            Ok(res) => res,
             Err(err) => {
                 error!("InferenceAgent::request_inference {err}");
                 return InferenceAgentMessage::RequestError;
             }
         };
 
-        InferenceAgentMessage::ResultRecieved(res) 
+        InferenceAgentMessage::ResultRecieved(res)
     }
 }
 
-impl Agent for InferenceAgent{
+impl Agent for InferenceAgent {
     type Reach = Context<InferenceAgent>;
     type Message = InferenceAgentMessage;
     type Input = InferenceAgentInput;
@@ -61,33 +60,35 @@ impl Agent for InferenceAgent{
         let window = web_sys::window().unwrap();
         let base_url = window.location().origin().unwrap();
         let url = format!("{base_url}/{API_URL}");
-        Self{
+        Self {
             link,
-            result:InferenceAgentOutput::Unitialized,
+            result: InferenceAgentOutput::Unitialized,
             url,
-            subscribers: HashSet::new(), 
+            subscribers: HashSet::new(),
         }
     }
 
     fn update(&mut self, msg: Self::Message) {
-        match msg{
+        match msg {
             InferenceAgentMessage::ResultRecieved(res) => {
                 self.result = InferenceAgentOutput::Clean(res);
-                self.subscribers.iter().for_each(|s|self.link.respond(s.clone(), self.result.clone()))
-            },
-            InferenceAgentMessage::RequestError => {},
+                self.subscribers
+                    .iter()
+                    .for_each(|s| self.link.respond(*s, self.result.clone()))
+            }
+            InferenceAgentMessage::RequestError => {}
         }
     }
 
     fn handle_input(&mut self, msg: Self::Input, _id: yew_agent::HandlerId) {
-        match msg{
+        match msg {
             InferenceAgentInput::NewInput(data) => {
-                if let InferenceAgentOutput::Clean(v) = self.result.clone(){
+                if let InferenceAgentOutput::Clean(v) = self.result.clone() {
                     self.result = InferenceAgentOutput::Dirty(v)
                 }
                 let url = self.url.clone();
                 self.link.send_future(Self::request_inference(url, data));
-            },
+            }
         }
     }
 
@@ -98,5 +99,4 @@ impl Agent for InferenceAgent{
     fn disconnected(&mut self, id: HandlerId) {
         self.subscribers.remove(&id);
     }
-    
 }
